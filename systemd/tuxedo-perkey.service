@@ -6,6 +6,8 @@ After=multi-user.target
 Type=oneshot
 # __TUXEDO_PERKEY_DIR__ is replaced by install.sh with the actual path
 Environment="TUXEDO_PERKEY_DIR=__TUXEDO_PERKEY_DIR__"
+ExecStartPre=-/sbin/modprobe -r tuxedo_nb04_keyboard
+ExecStartPre=-/sbin/modprobe -r tuxedo_nb04_wmi_ab
 ExecStart=/bin/bash -c 'modprobe tuxedo_nb04_rgb_perkey 2>/dev/null || insmod ${TUXEDO_PERKEY_DIR}/kernel/tuxedo_nb04_rgb_perkey.ko'
 ExecStartPost=/bin/bash -c '${TUXEDO_PERKEY_DIR}/app/.venv/bin/python ${TUXEDO_PERKEY_DIR}/app/apply_config.py'
 User=root

@@ -49,6 +49,7 @@ enum tux_wmi_xx_496in_80out_methods {
 };
 
 enum tux_wmi_normal_methods {
+	TUX_KBL_GET_DEVICE_STATUS = 2,
 	TUX_KBL_SET_ZONE = 3,
 };
 
@@ -105,15 +106,31 @@ static int call_method_normal(struct wmi_device *wdev, u32 method, u8 *buf, int 
 {
 	struct acpi_buffer acpi_buffer_in = { len, buf };
 	struct acpi_buffer acpi_buffer_out = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *acpi_object_out;
 	acpi_status status;
 
+	print_hex_dump_bytes("lightbar TX: ", DUMP_PREFIX_NONE, buf, len);
+
 	status = wmidev_evaluate_method(wdev, 0, method, &acpi_buffer_in, &acpi_buffer_out);
-	kfree(acpi_buffer_out.pointer);
 
 	if (ACPI_FAILURE(status)) {
 		dev_err(&wdev->dev, "WMI method %u failed: 0x%x\n", method, status);
+		kfree(acpi_buffer_out.pointer);
 		return -EIO;
 	}
+
+	acpi_object_out = acpi_buffer_out.pointer;
+	if (acpi_object_out && acpi_object_out->type == ACPI_TYPE_BUFFER && acpi_object_out->buffer.length > 0) {
+		dev_info(&wdev->dev, "Method %u OK, out[0]=0x%02x (len=%u)\n",
+		         method, acpi_object_out->buffer.pointer[0],
+		         acpi_object_out->buffer.length);
+	} else if (acpi_object_out) {
+		dev_info(&wdev->dev, "Method %u OK, output type=%u\n", method, acpi_object_out->type);
+	} else {
+		dev_info(&wdev->dev, "Method %u OK, no output\n", method);
+	}
+
+	kfree(acpi_buffer_out.pointer);
 	return 0;
 }
 
@@ -290,8 +307,23 @@ static struct kobj_attribute lightbar_attribute = __ATTR(lightbar, 0220, NULL, l
 
 static int tuxedo_nb04_rgb_perkey_probe(struct wmi_device *wdev, const void *context)
 {
+	u8 init_buf[8];
+	int ret;
+
 	pr_info("tuxedo_nb04_rgb_perkey: WMI device probed!\n");
 	g_wdev = wdev;
+
+	/* Call method 2 (Get Device Status) with DTID=0x02 to initialize KBTE.
+	 * Without this, method 3 (lightbar) returns 0x02 error because KBTE is
+	 * uninitialized and the firmware skips all BST handlers. */
+	memset(init_buf, 0, sizeof(init_buf));
+	init_buf[0] = 0x02; /* DTID = keyboard type query */
+	ret = call_method_normal(wdev, TUX_KBL_GET_DEVICE_STATUS, init_buf, 8);
+	if (ret)
+		dev_warn(&wdev->dev, "KBTE init (method 2) failed: %d\n", ret);
+	else
+		dev_info(&wdev->dev, "KBTE initialized via method 2\n");
+
 	return 0;
 }
 

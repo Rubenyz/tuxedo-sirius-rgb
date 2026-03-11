@@ -68,6 +68,23 @@ else
 fi
 echo ""
 
+# ── 3b. Blacklist conflicting TUXEDO modules ─────────
+echo "▸ Blacklisting conflicting TUXEDO WMI drivers..."
+BLACKLIST_DST="/etc/modprobe.d/tuxedo-perkey-blacklist.conf"
+cat <<'EOF' | sudo tee "$BLACKLIST_DST" >/dev/null
+# Block stock TUXEDO keyboard/WMI drivers that conflict with tuxedo_nb04_rgb_perkey
+# blacklist prevents auto-loading, install /bin/false prevents ALL loading
+blacklist tuxedo_nb04_wmi_ab
+blacklist tuxedo_nb04_keyboard
+install tuxedo_nb04_wmi_ab /bin/false
+install tuxedo_nb04_keyboard /bin/false
+EOF
+# Unload them if currently running
+sudo modprobe -r tuxedo_nb04_keyboard 2>/dev/null || true
+sudo modprobe -r tuxedo_nb04_wmi_ab 2>/dev/null || true
+echo "  blacklist installed ✓"
+echo ""
+
 # ── 4. Python virtual environment ───────────────────────
 echo "▸ Setting up Python virtual environment..."
 cd "$SCRIPT_DIR/app"
