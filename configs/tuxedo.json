@@ -1,0 +1,446 @@
+{
+  "name": "Tuxedo",
+  "keys": [
+    {
+      "id": 4,
+      "preset": 0
+    },
+    {
+      "id": 5,
+      "preset": 0
+    },
+    {
+      "id": 6,
+      "preset": 1
+    },
+    {
+      "id": 7,
+      "preset": 0
+    },
+    {
+      "id": 8,
+      "preset": 0
+    },
+    {
+      "id": 9,
+      "preset": 0
+    },
+    {
+      "id": 10,
+      "preset": 1
+    },
+    {
+      "id": 11,
+      "preset": 1
+    },
+    {
+      "id": 12,
+      "preset": 0
+    },
+    {
+      "id": 13,
+      "preset": 0
+    },
+    {
+      "id": 14,
+      "preset": 0
+    },
+    {
+      "id": 15,
+      "preset": 0
+    },
+    {
+      "id": 16,
+      "preset": 0
+    },
+    {
+      "id": 17,
+      "preset": 1
+    },
+    {
+      "id": 18,
+      "preset": 0
+    },
+    {
+      "id": 19,
+      "preset": 0
+    },
+    {
+      "id": 20,
+      "preset": 0
+    },
+    {
+      "id": 21,
+      "preset": 0
+    },
+    {
+      "id": 22,
+      "preset": 0
+    },
+    {
+      "id": 23,
+      "preset": 0
+    },
+    {
+      "id": 24,
+      "preset": 1
+    },
+    {
+      "id": 25,
+      "preset": 1
+    },
+    {
+      "id": 26,
+      "preset": 0
+    },
+    {
+      "id": 27,
+      "preset": 0
+    },
+    {
+      "id": 28,
+      "preset": 1
+    },
+    {
+      "id": 29,
+      "preset": 0
+    },
+    {
+      "id": 30,
+      "preset": 0
+    },
+    {
+      "id": 31,
+      "preset": 0
+    },
+    {
+      "id": 32,
+      "preset": 0
+    },
+    {
+      "id": 33,
+      "preset": 0
+    },
+    {
+      "id": 34,
+      "preset": 0
+    },
+    {
+      "id": 35,
+      "preset": 1
+    },
+    {
+      "id": 36,
+      "preset": 0
+    },
+    {
+      "id": 37,
+      "preset": 1
+    },
+    {
+      "id": 38,
+      "preset": 1
+    },
+    {
+      "id": 39,
+      "preset": 0
+    },
+    {
+      "id": 40,
+      "preset": 0
+    },
+    {
+      "id": 41,
+      "preset": 0
+    },
+    {
+      "id": 42,
+      "preset": 0
+    },
+    {
+      "id": 43,
+      "preset": 0
+    },
+    {
+      "id": 44,
+      "preset": 1
+    },
+    {
+      "id": 45,
+      "preset": 0
+    },
+    {
+      "id": 46,
+      "preset": 0
+    },
+    {
+      "id": 47,
+      "preset": 0
+    },
+    {
+      "id": 48,
+      "preset": 0
+    },
+    {
+      "id": 50,
+      "preset": 0
+    },
+    {
+      "id": 51,
+      "preset": 0
+    },
+    {
+      "id": 52,
+      "preset": 0
+    },
+    {
+      "id": 53,
+      "preset": 0
+    },
+    {
+      "id": 54,
+      "preset": 0
+    },
+    {
+      "id": 55,
+      "preset": 0
+    },
+    {
+      "id": 56,
+      "preset": 0
+    },
+    {
+      "id": 57,
+      "preset": 0
+    },
+    {
+      "id": 58,
+      "preset": 1
+    },
+    {
+      "id": 59,
+      "preset": 1
+    },
+    {
+      "id": 60,
+      "preset": 1
+    },
+    {
+      "id": 61,
+      "preset": 1
+    },
+    {
+      "id": 62,
+      "preset": 1
+    },
+    {
+      "id": 63,
+      "preset": 1
+    },
+    {
+      "id": 64,
+      "preset": 1
+    },
+    {
+      "id": 65,
+      "preset": 1
+    },
+    {
+      "id": 66,
+      "preset": 1
+    },
+    {
+      "id": 67,
+      "preset": 1
+    },
+    {
+      "id": 68,
+      "preset": 1
+    },
+    {
+      "id": 69,
+      "preset": 0
+    },
+    {
+      "id": 70,
+      "preset": 0
+    },
+    {
+      "id": 74,
+      "preset": 0
+    },
+    {
+      "id": 75,
+      "preset": 0
+    },
+    {
+      "id": 76,
+      "preset": 0
+    },
+    {
+      "id": 77,
+      "preset": 0
+    },
+    {
+      "id": 78,
+      "preset": 0
+    },
+    {
+      "id": 79,
+      "preset": 0
+    },
+    {
+      "id": 80,
+      "preset": 0
+    },
+    {
+      "id": 81,
+      "preset": 0
+    },
+    {
+      "id": 82,
+      "preset": 0
+    },
+    {
+      "id": 83,
+      "preset": 0
+    },
+    {
+      "id": 84,
+      "preset": 0
+    },
+    {
+      "id": 85,
+      "preset": 0
+    },
+    {
+      "id": 86,
+      "preset": 0
+    },
+    {
+      "id": 87,
+      "preset": 0
+    },
+    {
+      "id": 88,
+      "preset": 0
+    },
+    {
+      "id": 89,
+      "preset": 0
+    },
+    {
+      "id": 90,
+      "preset": 0
+    },
+    {
+      "id": 91,
+      "preset": 0
+    },
+    {
+      "id": 92,
+      "preset": 0
+    },
+    {
+      "id": 93,
+      "preset": 0
+    },
+    {
+      "id": 94,
+      "preset": 0
+    },
+    {
+      "id": 95,
+      "preset": 0
+    },
+    {
+      "id": 96,
+      "preset": 0
+    },
+    {
+      "id": 97,
+      "preset": 0
+    },
+    {
+      "id": 98,
+      "preset": 0
+    },
+    {
+      "id": 99,
+      "preset": 0
+    },
+    {
+      "id": 100,
+      "preset": 0
+    },
+    {
+      "id": 101,
+      "preset": 1
+    },
+    {
+      "id": 224,
+      "preset": 0
+    },
+    {
+      "id": 225,
+      "preset": 0
+    },
+    {
+      "id": 226,
+      "preset": 1
+    },
+    {
+      "id": 227,
+      "preset": 0
+    },
+    {
+      "id": 228,
+      "preset": 1
+    },
+    {
+      "id": 229,
+      "preset": 0
+    },
+    {
+      "id": 230,
+      "preset": 1
+    },
+    {
+      "id": 241,
+      "preset": 0
+    },
+    {
+      "id": 254,
+      "preset": 0
+    },
+    {
+      "id": 49,
+      "preset": 0
+    }
+  ],
+  "presets": [
+    {
+      "h": 0,
+      "s": 0,
+      "v": 0
+    },
+    {
+      "h": 0,
+      "s": 0,
+      "v": 255
+    },
+    {
+      "h": 0,
+      "s": 255,
+      "v": 255
+    }
+  ],
+  "lightbar": {
+    "left": {
+      "preset": 2
+    },
+    "right": {
+      "preset": 2
+    }
+  }
+}

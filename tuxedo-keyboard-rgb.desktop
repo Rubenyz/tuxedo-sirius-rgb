@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=TUXEDO Keyboard RGB
+Comment=Per-key RGB keyboard color editor
+Exec=__TUXEDO_PERKEY_DIR__/run_gui.sh
+Icon=__TUXEDO_PERKEY_DIR__/assets/icon.svg
+Terminal=false
+Categories=Settings;System;
+Keywords=keyboard;rgb;led;color;tuxedo;
+StartupNotify=true

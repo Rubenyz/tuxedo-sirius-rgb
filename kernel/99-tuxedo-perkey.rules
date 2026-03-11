@@ -1,0 +1,5 @@
+# TUXEDO NB04 RGB Per-Key udev rule
+# Grants access to tuxedo_nb04_rgb_perkey sysfs interface without sudo
+
+# Allow all users access to tuxedo_nb04_rgb_perkey sysfs files
+SUBSYSTEM=="module", KERNEL=="tuxedo_nb04_rgb_perkey", RUN+="/bin/chmod 0666 /sys/kernel/tuxedo_nb04_rgb_perkey/cmd /sys/kernel/tuxedo_nb04_rgb_perkey/batch /sys/kernel/tuxedo_nb04_rgb_perkey/lightbar"
