@@ -1,8 +1,10 @@
-# TUXEDO Sirius Per-Key RGB — v1.0.0
+# TUXEDO Sirius Per-Key RGB — v1.0.2
 
 Per-key RGB keyboard control for the **TUXEDO Sirius 16 Gen1** (APX958) on Linux.
 
 A custom kernel module exposes the keyboard's WMI interface through sysfs, and a PyQt6 GUI lets you paint individual keys with any color. Your color configuration is saved to JSON and automatically restored at boot via a systemd service.
+
+The module is registered with **DKMS** so it survives kernel updates, and the GUI self-heals: if the driver is missing or built for the wrong kernel (vermagic mismatch), it rebuilds and reloads automatically (one password prompt). Clone, install, use — no need to understand the internals.
 
 ![Screenshot](assets/screenshot.png)
 
@@ -21,7 +23,8 @@ Other TUXEDO NB04-based laptops with per-key RGB *may* work but are untested.
 - Linux kernel headers (`linux-headers-$(uname -r)`)
 - `build-essential` / `make` / `gcc`
 - Python 3.10+
-- Optional: `dkms` (auto-rebuilds the module on kernel updates)
+- `dkms` (recommended — auto-rebuilds the module on kernel updates; without it the module must be rebuilt by hand after each kernel update)
+- `pkexec` (PolicyKit) or `sudo` — used by the GUI to load the driver when needed
 
 ## Install
 
@@ -34,10 +37,11 @@ sudo ./install.sh
 The installer will:
 1. Build the `tuxedo_nb04_rgb_perkey` kernel module
 2. Install a udev rule for non-root sysfs access
-3. Create a Python virtual environment and install PyQt6
-4. Install a systemd service to load the driver and apply your config at boot
-5. Install a desktop menu entry
-6. Optionally register with DKMS for automatic rebuilds on kernel updates
+3. Blacklist the conflicting stock TUXEDO WMI drivers (`tuxedo_nb04_wmi_ab`, `tuxedo_nb04_keyboard`)
+4. Create a Python virtual environment and install PyQt6
+5. Install a systemd service to load the driver and apply your config at boot
+6. Register with DKMS (via `fix-module.sh`) for automatic rebuilds on kernel updates
+7. Install a desktop menu entry
 
 After installation, the driver is loaded and your keyboard is ready to use (no reboot required).
 
@@ -64,13 +68,36 @@ The GUI runs in the background with a system tray icon. To close it, right-click
 
 ### Manual Driver Control
 
+The driver normally loads itself (DKMS + systemd, and the GUI auto-repairs on
+mismatch). If you ever need to do it by hand:
+
 ```bash
-# Load
-cd kernel && sudo make install
+# (Re)build, register with DKMS and load — the fix for "module won't load",
+# e.g. after a kernel update (vermagic mismatch):
+sudo ./fix-module.sh
+
+# Ensure it's loaded, using the fastest path that works (modprobe → rebuild):
+sudo ./ensure-module.sh
 
 # Unload
-cd kernel && sudo make uninstall
+sudo modprobe -r tuxedo_nb04_rgb_perkey
 ```
+
+## Troubleshooting
+
+**The keyboard colors stopped working after a kernel update.**
+With DKMS installed this rebuilds automatically; if not, run `sudo ./fix-module.sh`.
+The GUI also detects this on startup (vermagic mismatch) and offers to rebuild.
+
+**`modprobe: invalid module format` / module won't load.**
+The compiled module no longer matches the running kernel. Run `sudo ./fix-module.sh`
+to rebuild and re-register it. You can verify the auto-repair flow end-to-end with
+`sudo ./test-autorepair.sh`.
+
+**`WMI device not found!` in `dmesg`.**
+A stock TUXEDO driver is holding the WMI device. The installer blacklists and
+unloads `tuxedo_nb04_wmi_ab` and `tuxedo_nb04_keyboard`; if you still hit this,
+run `sudo modprobe -r tuxedo_nb04_wmi_ab tuxedo_nb04_keyboard` and reload the driver.
 
 ### Config Files
 
@@ -102,6 +129,7 @@ To add a custom layout, create a JSON file in `layouts/keymaps/` following the e
 │   ├── manager.py                  # Config management
 │   ├── color_picker.py             # HSV color picker dialog
 │   ├── kernel.py                   # Core library (kernel interface)
+│   ├── module_check.py             # Module vermagic check + auto-repair
 │   ├── apply_config.py             # Boot-time config applicator
 │   ├── __version__.py              # Version information
 ├── assets/                         # Images and icons
@@ -123,6 +151,9 @@ To add a custom layout, create a JSON file in `layouts/keymaps/` following the e
 │   └── tuxedo-perkey.service       # Systemd service template
 ├── LICENSE                         # GPL-2.0 license
 ├── install.sh                      # One-step installer
+├── fix-module.sh                   # (Re)build + DKMS register + load the driver
+├── ensure-module.sh                # Lightweight "make sure it's loaded" helper
+├── test-autorepair.sh              # Verify the auto-repair flow end-to-end
 └── run_gui.sh                      # Launch the GUI
 ```
 

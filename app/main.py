@@ -1557,6 +1557,24 @@ def main():
     app.setQuitOnLastWindowClosed(False)
     app.setFont(QFont(FONT_FAMILY, 9))  # Explicit size to avoid system scaling
 
+    # Zorg dat de kernelmodule geladen is (en bij de huidige kernel past).
+    # Ontbreekt of mismatcht hij, dan wordt hij automatisch (her)gebouwd via
+    # een root-helper achter een grafische wachtwoordprompt.
+    from module_check import ensure_module, diagnosis, module_loaded
+    if not module_loaded():
+        QMessageBox.information(
+            None, "Toetsenbord-driver voorbereiden",
+            f"{diagnosis()}\n\nDe driver wordt nu (opnieuw) gebouwd en geladen. "
+            "Mogelijk vraagt het systeem om je wachtwoord."
+        )
+        ok, msg = ensure_module()
+        if not ok:
+            QMessageBox.critical(
+                None, "Driver niet geladen",
+                f"{msg}\n\nProbeer handmatig:\n  sudo ./fix-module.sh"
+            )
+            sys.exit(1)
+
     settings = QSettings("TUXEDO", "KeyboardViewer")
     saved_theme = settings.value("theme", "dark")
 

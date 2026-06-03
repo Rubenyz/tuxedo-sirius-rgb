@@ -119,26 +119,12 @@ echo "  service started ✓"
 echo ""
 
 # ── 6. DKMS setup (auto-rebuild on kernel updates) ──────
+# Single source of truth: fix-module.sh registers the driver with DKMS,
+# builds + signs it, and loads it. It also (re)loads on demand and is the
+# same script the app calls to auto-repair after a kernel update.
 echo "▸ Setting up DKMS (auto-rebuild on kernel updates)..."
 if command -v dkms &>/dev/null; then
-    DKMS_NAME="tuxedo-nb04-rgb-perkey"
-    DKMS_VER="1.0.0"
-    DKMS_SRC="/usr/src/${DKMS_NAME}-${DKMS_VER}"
-
-    # Remove old DKMS registration if present
-    sudo dkms remove "${DKMS_NAME}/${DKMS_VER}" --all 2>/dev/null || true
-
-    # Symlink driver source into /usr/src/
-    sudo rm -rf "$DKMS_SRC"
-    sudo mkdir -p "$DKMS_SRC"
-    sudo cp "$SCRIPT_DIR/kernel/tuxedo_nb04_rgb_perkey.c" "$DKMS_SRC/"
-    sudo cp "$SCRIPT_DIR/kernel/Makefile" "$DKMS_SRC/"
-    sudo cp "$SCRIPT_DIR/kernel/dkms.conf" "$DKMS_SRC/"
-
-    sudo dkms add "${DKMS_NAME}/${DKMS_VER}"
-    sudo dkms build "${DKMS_NAME}/${DKMS_VER}"
-    sudo dkms install "${DKMS_NAME}/${DKMS_VER}"
-    echo "  DKMS registered ✓ (module will auto-rebuild on kernel updates)"
+    sudo "$SCRIPT_DIR/fix-module.sh"
 else
     echo "  dkms not found, skipping (module must be rebuilt manually after kernel updates)"
     echo "  Install dkms: sudo apt install dkms  /  sudo dnf install dkms"
