@@ -1,4 +1,4 @@
-# TUXEDO Sirius Per-Key RGB — v1.0.2
+# TUXEDO Sirius Per-Key RGB — v1.0.3
 
 Per-key RGB keyboard control for the **TUXEDO Sirius 16 Gen1** (APX958) on Linux.
 
