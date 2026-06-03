@@ -15,6 +15,10 @@ The module is registered with **DKMS** so it survives kernel updates, and the GU
 | Model | Board | Keys | Interface |
 |---|---|---|---|
 | TUXEDO Sirius 16 Gen1 | APX958 | 104 (ISO) | WMI Method 6 |
+| TUXEDO Sirius 16 Gen2 | — | 104 (ISO) | WMI Method 6 |
+
+Sirius 16 Gen2 is confirmed working with no code changes — just make sure the
+stock `tuxedo_nb04_wmi_ab` driver is unloaded (the installer handles this).
 
 Other TUXEDO NB04-based laptops with per-key RGB *may* work but are untested.
 
@@ -98,6 +102,19 @@ to rebuild and re-register it. You can verify the auto-repair flow end-to-end wi
 A stock TUXEDO driver is holding the WMI device. The installer blacklists and
 unloads `tuxedo_nb04_wmi_ab` and `tuxedo_nb04_keyboard`; if you still hit this,
 run `sudo modprobe -r tuxedo_nb04_wmi_ab tuxedo_nb04_keyboard` and reload the driver.
+
+**Stray keys lighting up / colors look corrupted.**
+The driver serializes EC access and retries transient WMI failures, which
+prevents most of this. If you still see it, enable verbose logging and capture
+what the driver sent:
+
+```bash
+echo 1 | sudo tee /sys/module/tuxedo_nb04_rgb_perkey/parameters/debug
+sudo dmesg -w        # reproduce the glitch, then copy the log
+```
+
+The log shows the full per-key TX buffer and any non-zero firmware return value
+— please attach it when reporting the issue.
 
 ### Config Files
 

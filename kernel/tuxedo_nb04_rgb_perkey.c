@@ -18,6 +18,8 @@
 #include <linux/kobject.h>
 #include <linux/sysfs.h>
 #include <linux/string.h>
+#include <linux/mutex.h>
+#include <linux/delay.h>
 
 // From wmi_util.h
 #define TUX_KBL_SET_MULTIPLE_KEYS_LIGHTING_SETTINGS_COUNT_MAX	120
@@ -53,6 +55,27 @@ enum tux_wmi_normal_methods {
 	TUX_KBL_SET_ZONE = 3,
 };
 
+/*
+ * debug: when set, log every WMI call verbosely and dump the full TX buffer.
+ * Off by default to keep the kernel log quiet. Enable to diagnose issues like
+ * stray/corrupted keys (GitHub #2):
+ *     sudo modprobe tuxedo_nb04_rgb_perkey debug=1
+ *     # or at runtime:  echo 1 | sudo tee /sys/module/tuxedo_nb04_rgb_perkey/parameters/debug
+ */
+static bool debug;
+module_param(debug, bool, 0644);
+MODULE_PARM_DESC(debug, "Verbose logging incl. full TX/RX hex dumps (default: 0)");
+
+/*
+ * The embedded controller does not tolerate overlapping WMI calls well; an
+ * interleaved keyboard + lightbar update can corrupt the data the firmware
+ * applies (stray keys lighting up). Serialize all EC access and retry on the
+ * transient ACPI failures the EC occasionally returns.
+ */
+#define EC_MAX_RETRIES		3
+#define EC_RETRY_DELAY_MS	2
+static DEFINE_MUTEX(ec_lock);
+
 // From wmi_util.c
 static int tux_wmi_xx_496in_80out(struct wmi_device *wdev,
 				  enum tux_wmi_xx_496in_80out_methods method,
@@ -63,15 +86,31 @@ static int tux_wmi_xx_496in_80out(struct wmi_device *wdev,
 	struct acpi_buffer acpi_buffer_out = { ACPI_ALLOCATE_BUFFER, NULL };
 	union acpi_object *acpi_object_out = NULL;
 	acpi_status status;
-	int ret = 0;
+	int ret = 0, attempt;
 
-	dev_info(&wdev->dev, "Calling Method %u with 496 bytes input\n", method);
-	print_hex_dump_bytes("Input: ", DUMP_PREFIX_OFFSET, in->raw, 32);
+	if (debug) {
+		dev_info(&wdev->dev, "Calling Method %u with 496 bytes input\n", method);
+		print_hex_dump_bytes("perkey TX: ", DUMP_PREFIX_OFFSET, in->raw, 496);
+	}
 
-	status = wmidev_evaluate_method(wdev, 0, method, &acpi_buffer_in, &acpi_buffer_out);
-	
+	/* Serialize EC access and retry the transient failures it returns. */
+	mutex_lock(&ec_lock);
+	for (attempt = 0; ; attempt++) {
+		acpi_buffer_out.length = ACPI_ALLOCATE_BUFFER;
+		acpi_buffer_out.pointer = NULL;
+		status = wmidev_evaluate_method(wdev, 0, method, &acpi_buffer_in, &acpi_buffer_out);
+		if (ACPI_SUCCESS(status) || attempt >= EC_MAX_RETRIES)
+			break;
+		dev_warn(&wdev->dev, "WMI call failed: 0x%x (retry %d/%d)\n",
+		         status, attempt + 1, EC_MAX_RETRIES);
+		kfree(acpi_buffer_out.pointer);
+		msleep(EC_RETRY_DELAY_MS);
+	}
+	mutex_unlock(&ec_lock);
+
 	if (ACPI_FAILURE(status)) {
-		dev_err(&wdev->dev, "WMI call failed: 0x%x\n", status);
+		dev_err(&wdev->dev, "WMI call failed after %d attempt(s): 0x%x\n",
+		        attempt + 1, status);
 		return -EIO;
 	}
 	
@@ -94,10 +133,19 @@ static int tux_wmi_xx_496in_80out(struct wmi_device *wdev,
 	}
 
 	memcpy(out->raw, acpi_object_out->buffer.pointer, 80);
-	
-	dev_info(&wdev->dev, "✓ WMI call succeeded! Return value: 0x%02x\n", out->kbl_set_multiple_keys_out.return_value);
-	print_hex_dump_bytes("Output: ", DUMP_PREFIX_OFFSET, out->raw, 16);
-	
+
+	/* Surface a non-zero firmware return value — a likely culprit for stray
+	 * keys even when the ACPI call itself "succeeds" (GitHub #2). */
+	if (out->kbl_set_multiple_keys_out.return_value)
+		dev_warn(&wdev->dev, "Method %u firmware return value: 0x%02x\n",
+		         method, out->kbl_set_multiple_keys_out.return_value);
+
+	if (debug) {
+		dev_info(&wdev->dev, "WMI call succeeded, return value: 0x%02x\n",
+		         out->kbl_set_multiple_keys_out.return_value);
+		print_hex_dump_bytes("perkey RX: ", DUMP_PREFIX_OFFSET, out->raw, 16);
+	}
+
 	kfree(acpi_object_out);
 	return ret;
 }
@@ -108,26 +156,45 @@ static int call_method_normal(struct wmi_device *wdev, u32 method, u8 *buf, int 
 	struct acpi_buffer acpi_buffer_out = { ACPI_ALLOCATE_BUFFER, NULL };
 	union acpi_object *acpi_object_out;
 	acpi_status status;
+	int attempt;
 
-	print_hex_dump_bytes("lightbar TX: ", DUMP_PREFIX_NONE, buf, len);
+	if (debug)
+		print_hex_dump_bytes("lightbar TX: ", DUMP_PREFIX_NONE, buf, len);
 
-	status = wmidev_evaluate_method(wdev, 0, method, &acpi_buffer_in, &acpi_buffer_out);
+	/* Serialize EC access and retry the transient failures it returns. */
+	mutex_lock(&ec_lock);
+	for (attempt = 0; ; attempt++) {
+		acpi_buffer_out.length = ACPI_ALLOCATE_BUFFER;
+		acpi_buffer_out.pointer = NULL;
+		status = wmidev_evaluate_method(wdev, 0, method, &acpi_buffer_in, &acpi_buffer_out);
+		if (ACPI_SUCCESS(status) || attempt >= EC_MAX_RETRIES)
+			break;
+		dev_warn(&wdev->dev, "WMI method %u failed: 0x%x (retry %d/%d)\n",
+		         method, status, attempt + 1, EC_MAX_RETRIES);
+		kfree(acpi_buffer_out.pointer);
+		msleep(EC_RETRY_DELAY_MS);
+	}
+	mutex_unlock(&ec_lock);
 
 	if (ACPI_FAILURE(status)) {
-		dev_err(&wdev->dev, "WMI method %u failed: 0x%x\n", method, status);
+		dev_err(&wdev->dev, "WMI method %u failed after %d attempt(s): 0x%x\n",
+		        method, attempt + 1, status);
 		kfree(acpi_buffer_out.pointer);
 		return -EIO;
 	}
 
 	acpi_object_out = acpi_buffer_out.pointer;
 	if (acpi_object_out && acpi_object_out->type == ACPI_TYPE_BUFFER && acpi_object_out->buffer.length > 0) {
-		dev_info(&wdev->dev, "Method %u OK, out[0]=0x%02x (len=%u)\n",
-		         method, acpi_object_out->buffer.pointer[0],
-		         acpi_object_out->buffer.length);
-	} else if (acpi_object_out) {
-		dev_info(&wdev->dev, "Method %u OK, output type=%u\n", method, acpi_object_out->type);
-	} else {
-		dev_info(&wdev->dev, "Method %u OK, no output\n", method);
+		u8 rv = acpi_object_out->buffer.pointer[0];
+
+		if (rv)
+			dev_warn(&wdev->dev, "Method %u firmware return value: 0x%02x\n", method, rv);
+		if (debug)
+			dev_info(&wdev->dev, "Method %u OK, out[0]=0x%02x (len=%u)\n",
+			         method, rv, acpi_object_out->buffer.length);
+	} else if (debug) {
+		dev_info(&wdev->dev, "Method %u OK, output type=%u\n",
+		         method, acpi_object_out ? acpi_object_out->type : 0);
 	}
 
 	kfree(acpi_buffer_out.pointer);
